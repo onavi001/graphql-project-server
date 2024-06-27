@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "ivan",
@@ -11,6 +12,7 @@
   "dependencies": {
     "express": "^4.19.2",
     "express-graphql": "^0.12.0",
-    "graphql": "^16.9.0"
+    "graphql": "^16.9.0",
+    "mongoose": "^8.4.3"
   }
 }

@@ -1,34 +1,38 @@
 const graphql = require('graphql');
+const User = require("../model/user");
+const Hobby = require("../model/hobby");
+const Post = require("../model/post");
 //dummy data
-var usersData = [
-    {id:'1',name:'Bond',age:36, profession: 'profession 1'},
-    {id:'13',name:'Anna',age:36, profession: 'profession 2'},
-    {id:'211',name:'Bella',age:36, profession: 'profession 3'},
-    {id:'19',name:'Gina',age:36, profession: 'profession 4'},
-    {id:'150',name:'Georgina',age:36, profession: 'profession 5'},
-]
-var hobbiesData = [
-    {id: '1', title: 'Programming', description: 'description 1', userId: '150'},
-    {id: '2', title: 'Programming', description: 'description 2', userId: '211'},
-    {id: '3', title: 'Programming', description: 'description 3', userId: '211'},
-    {id: '4', title: 'Programming', description: 'description 4', userId: '13'},
-    {id: '5', title: 'Programming', description: 'description 5', userId: '1'},
-    {id: '6', title: 'Programming', description: 'description 6', userId: '150'}
-]
-var postsData = [
-    {id:'1', comment:'comment 1', userId: '1'},
-    {id:'2', comment:'comment 2', userId: '1'},
-    {id:'3', comment:'comment 3', userId: '19'},
-    {id:'4', comment:'comment 4', userId: '211'},
-    {id:'5', comment:'comment 5', userId: '1'},
-]
+// var usersData = [
+//     {id:'1',name:'Bond',age:36, profession: 'profession 1'},
+//     {id:'13',name:'Anna',age:36, profession: 'profession 2'},
+//     {id:'211',name:'Bella',age:36, profession: 'profession 3'},
+//     {id:'19',name:'Gina',age:36, profession: 'profession 4'},
+//     {id:'150',name:'Georgina',age:36, profession: 'profession 5'},
+// ]
+// var hobbiesData = [
+//     {id: '1', title: 'Programming', description: 'description 1', userId: '150'},
+//     {id: '2', title: 'Programming', description: 'description 2', userId: '211'},
+//     {id: '3', title: 'Programming', description: 'description 3', userId: '211'},
+//     {id: '4', title: 'Programming', description: 'description 4', userId: '13'},
+//     {id: '5', title: 'Programming', description: 'description 5', userId: '1'},
+//     {id: '6', title: 'Programming', description: 'description 6', userId: '150'}
+// ]
+// var postsData = [
+//     {id:'1', comment:'comment 1', userId: '1'},
+//     {id:'2', comment:'comment 2', userId: '1'},
+//     {id:'3', comment:'comment 3', userId: '19'},
+//     {id:'4', comment:'comment 4', userId: '211'},
+//     {id:'5', comment:'comment 5', userId: '1'},
+// ]
 const {
     GraphQLObjectType,
     GraphQLID,
     GraphQLString,
     GraphQLInt,
     GraphQLSchema,
-    GraphQLList
+    GraphQLList,
+    GraphQLNonNull
 } = graphql;
 //create types
 const UserType = new GraphQLObjectType({
@@ -43,13 +47,33 @@ const UserType = new GraphQLObjectType({
         hobbies: {
             type: new GraphQLList(HobbyType),
             resolve(parent, args) {
-                return hobbiesData.filter(hD=>hD.userId === parent.id);
+                return Hobby.find({userId : parent.id})
+                .then((hobbies) => {
+                    if (hobbies.length <= 0) {
+                        throw new Error(`hobbies not found`);
+                    }
+                    return hobbies
+                })
+                .catch((err) => {
+                    console.error(err);
+                    throw new Error('Error searching user');
+                });
             }
         },
         posts: {
             type: new GraphQLList(PostType),
             resolve(parent, args) {
-                return postsData.filter(pD=>pD.userId === parent.id);
+                return Post.find({userId : parent.id})
+                .then((posts) => {
+                    if (posts.length <= 0) {
+                        throw new Error(`posts not found`);
+                    }
+                    return posts
+                })
+                .catch((err) => {
+                    console.error(err);
+                    throw new Error('Error searching user');
+                });
             }
         }
     })
@@ -65,7 +89,19 @@ const HobbyType = new GraphQLObjectType({
         user: { 
             type: UserType,
             resolve(parent, args){
-                return usersData.find(uD => uD.id === parent.userId);
+                return User.findOne({_id : parent.userId})
+                .then((user) => {
+                    console.log('user hobbie')
+                    console.log(user)
+                    if (!user) {
+                        throw new Error(`User ID not found`);
+                    }
+                    return user;
+                })
+                .catch((err) => {
+                    console.error(err);
+                    throw new Error('Error searching user');
+                });
             }
 
         }
@@ -81,7 +117,19 @@ const PostType = new GraphQLObjectType({
         user: { 
             type: UserType,
             resolve(parent, args){
-                return usersData.find(uD => uD.id === parent.userId);
+                return User.findOne({_id : parent.userId})
+                .then((user) => {
+                    console.log('user post')
+                    console.log(user)
+                    if (!user) {
+                        throw new Error(`User ID not found`);
+                    }
+                    return user;
+                })
+                .catch((err) => {
+                    console.error(err);
+                    throw new Error('Error searching user');
+                });
             }
 
         }
@@ -96,43 +144,72 @@ const RootQuery = new GraphQLObjectType({
             type: UserType,
             args: {id: {type: GraphQLString}},
             resolve(parent, args) {
-                return usersData.find(uD => uD.id === args.id);
-                //we reolve with data
-                //get and return data from datasource
+                return User.findOne({_id:args.id})
+                .then((user) => {
+                    console.log(user)
+                    if (!user) {
+                        throw new Error(`User ID not found`);
+                    }
+                    return user
+                })
+                .catch((err) => {
+                    console.error(err);
+                    throw new Error('Error searching user');
+                });
             }
         },
         users: {
             type: new GraphQLList(UserType),
             resolve(parent,args){
-                return usersData;
+                return User.find();
             }
         },
         hobby: {
             type: HobbyType,
             args: {id: {type: GraphQLID}},
             resolve(parent, args) {
-                return hobbiesData.find(hD => hD.id === args.id);
-                //return data from our hobby
+                return Hobby.findOne({_id:args.id})
+                .then((hobby) => {
+                    console.log(hobby)
+                    if (!hobby) {
+                        throw new Error(`Hobby ID not found`);
+                    }
+                    return hobby
+                })
+                .catch((err) => {
+                    console.error(err);
+                    throw new Error('Error searching hobby');
+                });
             }
         },
         hobbies: {
             type: new GraphQLList(HobbyType),
             resolve(parent,args){
-                return hobbiesData;
+                return Hobby.find();
             }
         },
         post: {
             type: PostType,
             args: {id: {type: GraphQLID}},
             resolve(parent, args) {
-                return postsData.find(pD => pD.id === args.id);
-                //return data from our posts
+                return Post.findOne({_id:args.id})
+                .then((post) => {
+                    console.log(post)
+                    if (!post) {
+                        throw new Error(`Post ID not found`);
+                    }
+                    return post
+                })
+                .catch((err) => {
+                    console.error(err);
+                    throw new Error('Error searching post');
+                });
             }
         },
         posts: {
             type: new GraphQLList(PostType),
             resolve(parent,args){
-                return postsData;
+                return Post.find();
             }
         },
     }
@@ -145,50 +222,157 @@ const Mutation = new GraphQLObjectType({
         createUser: {
             type: UserType,
             args: {
-                name: {type: GraphQLString},
-                age: {type: GraphQLString},
+                name: {type: new GraphQLNonNull(GraphQLString)},
+                age: {type: new GraphQLNonNull(GraphQLInt)},
                 profession: {type: GraphQLString},
             },
             resolve(parent, args){
-                let user = {
+                let user = User({
                     name: args.name,
                     age: args.age,
                     profession: args.profession
+                })
+                
+                return user.save();
+            }
+        },
+        //update user
+        UpdateUser: {
+            type: UserType,
+            args: {
+                id: {type: new GraphQLNonNull(GraphQLString)},
+                name: {type: new GraphQLNonNull(GraphQLString)},
+                age: {type: new GraphQLNonNull(GraphQLInt)},
+                profession: {type: GraphQLString},
+            },
+            resolve(parent, args){
+                return User.findByIdAndUpdate(
+                    args.id,
+                    {
+                        $set:{
+                            name: args.name,
+                            age: args.age,
+                            profession: args.profession
+                        }
+                    },
+                    {new: true}//send back the uodate obj
+                )
+            }
+        },
+        //remove user
+        RemoveUser: {
+            type: UserType,
+            args: {
+                id: {type: new GraphQLNonNull(GraphQLString)},
+            },
+            resolve(parent, args){
+                const removeUser = User.findByIdAndDelete(args.id).exec();
+                if (!removeUser) {
+                    throw new "Error"();
                 }
-
-                return user;
+                return removeUser;
             }
         },
         createPost: {
             type: PostType,
             args: {
-                comment: {type: GraphQLString},
-                userId: {type: GraphQLID}
+                comment: {type: new GraphQLNonNull(GraphQLString)},
+                userId: {type: new GraphQLNonNull(GraphQLID)}
             },
             resolve(parent, args){
-                let post = {
+                let post = Post({
                     comment: args.comment,
                     userId: args.userId
-                }
+                })
 
-                return post;
+                return post.save();
+            }
+        },
+        //update post
+        UpdatePost: {
+            type: PostType,
+            args: {
+                id: {type: new GraphQLNonNull(GraphQLString)},
+                comment: {type: new GraphQLNonNull(GraphQLString)}
+            },
+            resolve(parent, args){
+                return Post.findByIdAndUpdate(
+                    args.id,
+                    {
+                        $set:{
+                            comment: args.comment
+                        }
+                    },
+                    {new: true}//send back the uodate obj
+                )
+            }
+        },
+        //remove post
+        RemovePost: {
+            type: PostType,
+            args: {
+                id: {type: new GraphQLNonNull(GraphQLString)},
+            },
+            resolve(parent, args){
+                const removePost = Post.findByIdAndDelete(args.id).exec();
+                if (!removePost) {
+                    throw new "Error"();
+                }
+                return removePost;
             }
         },
         createHobby: {
             type: HobbyType,
             args: {
-                title: {type: GraphQLString},
-                description: {type: GraphQLString},
-                userId: {type: GraphQLID}
+                title: {type: new GraphQLNonNull(GraphQLString)},
+                description: {type: new GraphQLNonNull(GraphQLString)},
+                userId: {type: new GraphQLNonNull(GraphQLID)}
             },
             resolve(parent, args){
-                let hobby = {
+                let hobby = Hobby({
+                    title: args.title,
+                    description: args.description,
                     userId: args.userId
-                }
+                })
 
-                return hobby;
+                return hobby.save();
             }
-        }
+        },
+        //update hobby
+        UpdateHobby: {
+            type: HobbyType,
+            args: {
+                id: {type: new GraphQLNonNull(GraphQLString)},
+                title: {type: new GraphQLNonNull(GraphQLString)},
+                description: {type: new GraphQLNonNull(GraphQLString)}
+            },
+            resolve(parent, args){
+                return Hobby.findByIdAndUpdate(
+                    args.id,
+                    {
+                        $set:{
+                            title: args.title,
+                            description: args.description
+                        }
+                    },
+                    {new: true}//send back the uodate obj
+                )
+            }
+        },
+        //remove hobby
+        RemovePost: {
+            type: HobbyType,
+            args: {
+                id: {type: new GraphQLNonNull(GraphQLString)},
+            },
+            resolve(parent, args){
+                const removeHobby = Hobby.findByIdAndDelete(args.id).exec();
+                if (!removeHobby) {
+                    throw new "Error"();
+                }
+                return removePost;
+            }
+        },
     }
 });
 module.exports = new GraphQLSchema({

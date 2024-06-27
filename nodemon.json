@@ -1,0 +1,7 @@
+{
+    "env":{
+        "mongoDatabase": "testing",
+        "mongoUserName": "navi",
+        "mongoUserPassword": "Onavi.001"
+    }
+}
