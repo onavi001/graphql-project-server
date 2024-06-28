@@ -5,9 +5,6 @@ const mongoose = require('mongoose');
 
 const app = express();
 const port = process.env.PORT || 4000;
-/**
- * mongodb+srv://navi:Onavi.001@cluster0.iiyve1i.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
- */
 app.use('/graphql',graphqlHTTP({
     graphiql: true,
     schema
