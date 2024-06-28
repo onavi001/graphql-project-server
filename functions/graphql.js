@@ -4,35 +4,19 @@ const schema = require('../schema/schema');
 const mongoose = require('mongoose');
 
 const app = express();
+const port = process.env.PORT || 4000;
 
-const connectToDatabase = async () => {
-  await mongoose.connect(`mongodb+srv://${process.env.mongoUserName}:${process.env.mongoUserPassword}@cluster0.iiyve1i.mongodb.net/${process.env.mongoDatabase}?retryWrites=true&w=majority&appName=Cluster0`, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-  });
-};
-
-let isConnected;
-
-const handler = async (event, context) => {
-  context.callbackWaitsForEmptyEventLoop = false;
-
-  if (!isConnected) {
-    await connectToDatabase();
-    isConnected = mongoose.connection.readyState;
-  }
-
-  app.use('/graphql', graphqlHTTP({
+app.use('/graphql',graphqlHTTP({
     graphiql: true,
     schema
-  }));
+}));
 
-  return new Promise((resolve, reject) => {
-    app.handle(event, context, (err, response) => {
-      if (err) reject(err);
-      else resolve(response);
-    });
-  });
-};
-
-exports.handler = handler;
+mongoose.connect(`mongodb+srv://${process.env.mongoUserName}:${process.env.mongoUserPassword}@cluster0.iiyve1i.mongodb.net/${process.env.mongoDatabase}?retryWrites=true&w=majority&appName=Cluster0`,
+    {useNewUrlParser: true, useUnifiedTopology:true}
+).then(()=>{
+    app.listen({port:port}, () => {
+        console.log('Listening for request on my awesome port ' + port);
+    })
+}).catch((e)=>{
+    console.log("Error : "+e)
+})
