@@ -11,6 +11,3 @@ to = "/.netlify/functions/api/:splat"
 [build]
 command = "npm install"
 publish = "public"  # Este directorio puede no ser relevante para un proyecto backend
-
-[functions]
-directory = "functions"  # Directorio donde están tus funciones lambda, si aplicable
