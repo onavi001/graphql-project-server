@@ -11,7 +11,7 @@ const connectToDatabase = async () => {
     useUnifiedTopology: true
   });
 };
-
+ 
 let isConnected;
 
 const handler = async (event, context) => {
@@ -26,7 +26,9 @@ const handler = async (event, context) => {
     graphiql: true,
     schema
   }));
-
+  app.listen({port:port}, () => {
+    console.log('Listening for request on my awesome port ' + port);
+})
   return new Promise((resolve, reject) => {
     app.handle(event, context, (err, response) => {
       if (err) reject(err);
