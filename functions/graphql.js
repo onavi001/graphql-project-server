@@ -2,7 +2,7 @@ const { ApolloServer, gql } = require('apollo-server-lambda');
 const mongoose = require('mongoose');
 const express = require('express');
 const { graphqlHTTP } = require('express-graphql');
-const schema = require('../../schema/schema');
+const schema = require('../schema/schema');
 
 const connectToDatabase = () => {
   return mongoose.connect(`mongodb+srv://${process.env.mongoUserName}:${process.env.mongoUserPassword}@cluster0.iiyve1i.mongodb.net/${process.env.mongoDatabase}?retryWrites=true&w=majority&appName=Cluster0`, {
