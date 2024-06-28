@@ -1,32 +1,38 @@
-const { ApolloServer, gql } = require('apollo-server-lambda');
-const mongoose = require('mongoose');
 const express = require('express');
 const { graphqlHTTP } = require('express-graphql');
 const schema = require('../schema/schema');
+const mongoose = require('mongoose');
 
-const connectToDatabase = () => {
-  return mongoose.connect(`mongodb+srv://${process.env.mongoUserName}:${process.env.mongoUserPassword}@cluster0.iiyve1i.mongodb.net/${process.env.mongoDatabase}?retryWrites=true&w=majority&appName=Cluster0`, {
+const app = express();
+
+const connectToDatabase = async () => {
+  await mongoose.connect(`mongodb+srv://${process.env.mongoUserName}:${process.env.mongoUserPassword}@cluster0.iiyve1i.mongodb.net/${process.env.mongoDatabase}?retryWrites=true&w=majority&appName=Cluster0`, {
     useNewUrlParser: true,
     useUnifiedTopology: true
   });
 };
 
-const server = new ApolloServer({
-  schema,
-  graphiql: true
-});
+let isConnected;
 
 const handler = async (event, context) => {
   context.callbackWaitsForEmptyEventLoop = false;
-  if (!mongoose.connection.readyState) {
+
+  if (!isConnected) {
     await connectToDatabase();
+    isConnected = mongoose.connection.readyState;
   }
-  const expressApp = express();
-  expressApp.use('/graphql', graphqlHTTP({
-    schema,
-    graphiql: true
+
+  app.use('/graphql', graphqlHTTP({
+    graphiql: true,
+    schema
   }));
-  return server.createHandler()(event, context);
+
+  return new Promise((resolve, reject) => {
+    app.handle(event, context, (err, response) => {
+      if (err) reject(err);
+      else resolve(response);
+    });
+  });
 };
 
 exports.handler = handler;
